@@ -1,0 +1,52 @@
+FUNCTION_BLOCK inverted_pendulum
+
+VAR_INPUT
+    angle : REAL;
+    angular_velocity : REAL;
+    car_position : REAL;
+    car_velocity : REAL;
+END_VAR
+
+VAR_OUTPUT
+    control_action : REAL;
+END_VAR
+
+FUZZIFY angle
+    TERM left_tilted := trape(-30, -30, -10, 0);
+    TERM vertical := trape(-5, 0, 0, 5);
+    TERM right_tilted := trape(0, 10, 30, 30);
+END_FUZZIFY
+
+FUZZIFY angular_velocity
+    TERM moving_left := trape(-5, -5, -1, 0);
+    TERM stopped := trape(-1, 0, 0, 1);
+    TERM moving_right := trape(0, 1, 5, 5);
+END_FUZZIFY
+
+FUZZIFY car_position
+    TERM left := trape(-2, -2, -0.5, 0);
+    TERM center := trape(-0.5, 0, 0, 0.5);
+    TERM right := trape(0, 0.5, 2, 2);
+END_FUZZIFY
+
+FUZZIFY car_velocity
+    TERM moving_left := trape(-2, -2, -0.5, 0);
+    TERM stopped := trape(-0.5, 0, 0, 0.5);
+    TERM moving_right := trape(0, 0.5, 2, 2);
+END_FUZZIFY
+
+DEFUZZIFY control_action
+    TERM push_left := trape(-100, -80, -50, -20);
+    TERM no_push := trape(-20, -5, 5, 20);
+    TERM push_right := trape(20, 50, 80, 100);
+    METHOD : COG; // Centro de Gravidade
+    DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK No1
+    RULE 1 : IF angle IS left_tilted AND angular_velocity IS moving_left THEN control_action IS push_right;
+    RULE 2 : IF angle IS right_tilted AND angular_velocity IS moving_right THEN control_action IS push_left;
+    RULE 3 : IF angle IS vertical AND angular_velocity IS stopped THEN control_action IS no_push;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
